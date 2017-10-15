@@ -11,6 +11,7 @@ from chainer.training import extensions
 def mnist_test():
     train, test = datasets.get_mnist()
     train_iter = iterators.SerialIterator(train, batch_size=100, shuffle=True)
+    test_iter = iterators.SerialIterator(test, batch_size=100, repeat=False, shuffle=False)
 
     class MLP(Chain):
         def __init__(self, n_units, n_out):
@@ -46,7 +47,7 @@ def mnist_test():
     updater = training.StandardUpdater(train_iter, optimizer)
     trainer = training.Trainer(updater, (6, 'epoch'), out='result')
 
-    trainer.extend(extensions.Evaluator(train_iter, model))
+    trainer.extend(extensions.Evaluator(test_iter, model))
     trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(['epoch', 'main/accuracy', 'validation/main/accuracy']))
     trainer.extend(extensions.ProgressBar())
