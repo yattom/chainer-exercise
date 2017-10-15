@@ -40,7 +40,7 @@ def mnist_test():
             report({'loss': loss, 'accuracy': accuracy}, self)
             return loss
 
-    model =Classifier(MLP(100, 10))
+    model = Classifier(MLP(100, 10))
     optimizer = optimizers.SGD()
     optimizer.setup(model)
 
