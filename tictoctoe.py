@@ -21,6 +21,10 @@ class TicTocToe:
     def board(self, side):
         return [None if v is None else True if v == side else False for v in self._board]
 
+    def record(self, side):
+        return [([None if v is None else True if v == side else False for v in b], h)
+                for b, s, h in self._record if s == side]
+
     def move(self, side, pos):
         assert self.turn == side
         assert self._board[pos] is None
