@@ -34,6 +34,7 @@ def mnist_test():
                 self.predictor = predictor
 
         def __call__(self, x, t):
+            print(x, t)
             y = self.predictor(x)
             loss = F.softmax_cross_entropy(y, t)
             accuracy = F.accuracy(y, t)

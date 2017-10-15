@@ -9,30 +9,29 @@ from chainer.training import extensions
 
 from tictoctoe import Game, TicTocToe
 
-W_WIN = 1.0
-W_LOST = -1.0
-W_DRAW = 0.5
+W_WIN = np.int32(1)
+W_LOST = np.int32(-1)
 
 def create_dataset():
     train_raw = []
     score_raw = []
-    for i in range(3):
+    for i in range(10000):
         g = Game()
         g.play()
         result, winner = g.result()
         if result == TicTocToe.WIN:
-            for b, r in g.playing.record(winner):
+            for b, h in g.playing.record(winner):
                 b_num = [0 if v == None else 1 if v == winner else -1 for v in b]
                 r_num = [0] * len(b)
-                r_num[h] = 1
+                r_num[h] = np.float32(1)
                 train_raw.append(np.array(b_num + r_num, np.float32))
-                score_raw.append(1.0)
-            for b, r in g.playing.record(TicTocToe.SIDE_O if winner == TicTocToe.SIDE_X else TicTocToe.SIDE_X):
-                b_num = [0 if v == None else 1 if v == winner else -1 for v in b]
+                score_raw.append(W_WIN)
+            for b, h in g.playing.record(TicTocToe.SIDE_O if winner == TicTocToe.SIDE_X else TicTocToe.SIDE_X):
+                b_num = [0 if v == None else 1 if v != winner else -1 for v in b]
                 r_num = [0] * len(b)
-                r_num[h] = 1
-                train_raw.append(b_num + r_num)
-                score_raw.append(-1.0)
+                r_num[h] = np.float32(1)
+                train_raw.append(np.array(b_num + r_num, np.float32))
+                score_raw.append(W_LOST)
     return datasets.TupleDataset(train_raw, score_raw)
 
 
@@ -41,7 +40,7 @@ def tictoctoe_test():
     _, test = datasets.get_mnist()
     train = create_dataset()
     train_iter = iterators.SerialIterator(train, batch_size=100, shuffle=True)
-    test_iter = iterators.SerialIterator(test, batch_size=100, repeat=False, shuffle=False)
+    # test_iter = iterators.SerialIterator(test, batch_size=100, repeat=False, shuffle=False)
 
     class MLP(Chain):
         def __init__(self, n_units, n_out):
@@ -77,7 +76,7 @@ def tictoctoe_test():
     updater = training.StandardUpdater(train_iter, optimizer)
     trainer = training.Trainer(updater, (6, 'epoch'), out='result')
 
-    trainer.extend(extensions.Evaluator(test_iter, model))
+    # trainer.extend(extensions.Evaluator(test_iter, model))
     trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(['epoch', 'main/accuracy', 'validation/main/accuracy']))
     trainer.extend(extensions.ProgressBar())

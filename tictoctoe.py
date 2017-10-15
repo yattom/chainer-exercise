@@ -52,12 +52,10 @@ class TicTocToe:
                         i = self._pos(r, c)
                         s.append(self._board[i])
                     if s == [TicTocToe.SIDE_O] * TicTocToe.WIN_LENGTH:
-                        print(s)
                         self.result = TicTocToe.WIN
                         self.winner = TicTocToe.SIDE_O
                         return
                     if s == [TicTocToe.SIDE_X] * TicTocToe.WIN_LENGTH:
-                        print(s)
                         self.result = TicTocToe.WIN
                         self.winner = TicTocToe.SIDE_X
                         return
