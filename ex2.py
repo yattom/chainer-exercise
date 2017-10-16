@@ -10,9 +10,12 @@ from chainer.training import extensions
 from tictoctoe import Game, TicTocToe
 
 W_WIN = np.int32(1)
-W_LOST = np.int32(-1)
+W_LOST = np.int32(2)
 
-def create_dataset():
+def create_dataset_board_and_hand_and_result():
+    '''
+    input looks like ([board ... hand ...], win/lost)
+    '''
     train_raw = []
     score_raw = []
     for i in range(10000):
@@ -21,13 +24,13 @@ def create_dataset():
         result, winner = g.result()
         if result == TicTocToe.WIN:
             for b, h in g.playing.record(winner):
-                b_num = [0 if v == None else 1 if v == winner else -1 for v in b]
+                b_num = [0 if v is None else 1 if v else -1 for v in b]
                 r_num = [0] * len(b)
                 r_num[h] = np.float32(1)
                 train_raw.append(np.array(b_num + r_num, np.float32))
                 score_raw.append(W_WIN)
             for b, h in g.playing.record(TicTocToe.SIDE_O if winner == TicTocToe.SIDE_X else TicTocToe.SIDE_X):
-                b_num = [0 if v == None else 1 if v != winner else -1 for v in b]
+                b_num = [0 if v is None else 1 if v else -1 for v in b]
                 r_num = [0] * len(b)
                 r_num[h] = np.float32(1)
                 train_raw.append(np.array(b_num + r_num, np.float32))
@@ -35,10 +38,32 @@ def create_dataset():
     return datasets.TupleDataset(train_raw, score_raw)
 
 
+def create_dataset_board_and_result():
+    '''
+    input looks like ([board], win/lost)
+    '''
+    train_raw = []
+    score_raw = []
+    for i in range(10000):
+        g = Game()
+        g.play()
+        result, winner = g.result()
+        if result == TicTocToe.WIN:
+            for b, h in g.playing.record(winner):
+                b[h] = True
+                b_num = [0 if v is None else 1 if v else -1 for v in b]
+                train_raw.append(np.array(b_num, np.float32))
+                score_raw.append(W_WIN)
+            for b, h in g.playing.record(TicTocToe.SIDE_O if winner == TicTocToe.SIDE_X else TicTocToe.SIDE_X):
+                b[h] = True
+                b_num = [0 if v is None else 1 if v else -1 for v in b]
+                train_raw.append(np.array(b_num, np.float32))
+                score_raw.append(W_LOST)
+    return datasets.TupleDataset(train_raw, score_raw)
+
 
 def tictoctoe_test():
-    _, test = datasets.get_mnist()
-    train = create_dataset()
+    train = create_dataset_board_and_result()
     train_iter = iterators.SerialIterator(train, batch_size=100, shuffle=True)
     # test_iter = iterators.SerialIterator(test, batch_size=100, repeat=False, shuffle=False)
 
@@ -69,7 +94,7 @@ def tictoctoe_test():
             report({'loss': loss, 'accuracy': accuracy}, self)
             return loss
 
-    model = Classifier(MLP(100, 10))
+    model = Classifier(MLP(100, 2))
     optimizer = optimizers.SGD()
     optimizer.setup(model)
 
